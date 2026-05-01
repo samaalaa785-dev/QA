@@ -1285,11 +1285,52 @@ void main() {
 
   group('Admin screen navigation widget flow', () {
     testWidgets(
-      'PASS: valid admin login opens the dashboard route',
+      'PASS: splash opens role selection before any role dashboard',
       (tester) async {
         await tester.pumpWidget(const MyApp());
 
-        expect(find.text('Super Admin Access'), findsOneWidget);
+        expect(find.text('Salahny'), findsOneWidget);
+        expect(find.text('Super Admin Access'), findsNothing);
+
+        await tester.pump(const Duration(milliseconds: 750));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Choose Role'), findsOneWidget);
+        expect(find.text('Admin'), findsOneWidget);
+        expect(find.text('Platform command center'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'PASS: selecting each non-admin role opens that role home',
+      (tester) async {
+        await tester.pumpWidget(const MyApp());
+        await tester.pump(const Duration(milliseconds: 750));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Driver'));
+        await tester.pumpAndSettle();
+        expect(find.text('Driver Home'), findsOneWidget);
+
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Workshop'));
+        await tester.pumpAndSettle();
+        expect(find.text('Workshop Home'), findsOneWidget);
+
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('AI Diagnostics'));
+        await tester.pumpAndSettle();
+        expect(find.text('AI Diagnostics Home'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'PASS: valid admin login opens the dashboard route',
+      (tester) async {
+        await tester.pumpWidget(const MyApp());
+        await _openAdminLogin(tester);
 
         await tester.tap(find.text('Access Admin Dashboard'));
         await tester.pump();
@@ -1304,6 +1345,7 @@ void main() {
       'PASS: dashboard quick action opens Services management',
       (tester) async {
         await tester.pumpWidget(const MyApp());
+        await _openAdminLogin(tester);
 
         await tester.tap(find.text('Access Admin Dashboard'));
         await tester.pump();
@@ -1323,6 +1365,7 @@ void main() {
       'FAIL scenario: invalid admin credentials stay on login screen',
       (tester) async {
         await tester.pumpWidget(const MyApp());
+        await _openAdminLogin(tester);
 
         await tester.enterText(find.byType(EditableText).at(1), 'wrong-password');
         await tester.tap(find.text('Access Admin Dashboard'));
@@ -1338,6 +1381,7 @@ void main() {
       'FAIL scenario: malformed email is rejected before navigation',
       (tester) async {
         await tester.pumpWidget(const MyApp());
+        await _openAdminLogin(tester);
 
         await tester.enterText(find.byType(EditableText).first, 'admin-email');
         await tester.tap(find.text('Access Admin Dashboard'));
@@ -1348,6 +1392,14 @@ void main() {
       },
     );
   });
+}
+
+Future<void> _openAdminLogin(WidgetTester tester) async {
+  await tester.pump(const Duration(milliseconds: 750));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Admin'));
+  await tester.pumpAndSettle();
+  expect(find.text('Super Admin Access'), findsOneWidget);
 }
 
 // ============================================================
